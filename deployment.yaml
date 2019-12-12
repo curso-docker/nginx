@@ -25,7 +25,6 @@ kind: Service
 metadata:
   name: nginx-nodeport
 spec:
-  externalTrafficPolicy: Cluster
   ports:
   - name: nginx-port
     port: 80
@@ -34,8 +33,6 @@ spec:
   selector:
     app: nginx
   type: NodePort
-status:
-  loadBalancer: {}
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -50,5 +47,3 @@ spec:
           serviceName: nginx-nodeport
           servicePort: 80
         path: /
-status:
-  loadBalancer: {}
