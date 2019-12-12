@@ -1,5 +1,5 @@
 kind: Deployment
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 metadata:
   name: nginx-deploy
   labels:
@@ -25,11 +25,14 @@ kind: Service
 metadata:
   name: nginx-service
 spec:
-  type: NodePort 
   ports:
-    - name: http
-      port: 80
-      targetPort: 80
-      nodePort: 31080
+  - name: wordpress-port
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  sessionAffinity: None
+  type: NodePort
+status:
+  loadBalancer: {}
   selector:
     app: nginx
