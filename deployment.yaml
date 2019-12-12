@@ -1,38 +1,66 @@
-kind: Deployment
 apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: nginx-deploy
-  labels:
-    app: nginx
+  name: nginx
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: nginx
+      workload.user.cattle.io/workloadselector: deployment-default-nginx
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
   template:
     metadata:
       labels:
-        app: nginx
+        workload.user.cattle.io/workloadselector: deployment-default-nginx
     spec:
       containers:
-      - name: nginx-deploy
-        image: nginx
+      - image: nginx
+        imagePullPolicy: Always
+        name: nginx
         ports:
         - containerPort: 80
+          name: nginx-port
+          protocol: TCP
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: nginx-service
+  name: nginx-nodeport
+  ownerReferences:
+  - apiVersion: apps/v1beta2
+    controller: true
+    kind: deployment
+    name: nginx
 spec:
+  externalTrafficPolicy: Cluster
   ports:
-  - name: wordpress-port
+  - name: nginx-port
     port: 80
     protocol: TCP
     targetPort: 80
+  selector:
+    workload.user.cattle.io/workloadselector: deployment-default-nginx
   sessionAffinity: None
   type: NodePort
 status:
   loadBalancer: {}
-  selector:
-    app: nginx
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: nginx
+spec:
+  rules:
+  - host: nginx.default.34.69.82.108.xip.io
+    http:
+      paths:
+      - backend:
+          serviceName: nginx-nodeport
+          servicePort: 80
+        path: /
+status:
+  loadBalancer: {}
